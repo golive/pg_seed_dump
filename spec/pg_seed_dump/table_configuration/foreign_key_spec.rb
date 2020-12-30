@@ -7,6 +7,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
       expect(foreign_key.to_table).to eq :users
       expect(foreign_key.type_column).to be_nil
       expect(foreign_key.type_value).to be_nil
+      expect(foreign_key.reverse_processing).to be true
       expect(foreign_key).to_not be_polymorphic
     end
 
@@ -39,7 +40,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
     context "polymorphic" do
       it "works ok with correct data" do
-        foreign_key = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
+        foreign_key = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
         expect(foreign_key.from_table).to eq :blog_posts
         expect(foreign_key.column_name).to eq :user_id
         expect(foreign_key.to_table).to eq :users
@@ -50,7 +51,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
       it "raises an error if matcher column doesn't exist" do
         expect {
-          described_class.new('blog_posts', 'user_id', 'users', 'user_type', 'User')
+          described_class.new('blog_posts', 'user_id', 'users', type_column: 'user_type', type_value: 'User')
         }.to raise_error(
           PgSeedDump::Configuration::ColumnNotExistsError,
           "Column user_type in table blog_posts doesn't exist"
@@ -59,7 +60,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
       it "raises an error if column in origin table and multiple matcher columns doesn't exist" do
         expect {
-          described_class.new('blog_posts', 'user2_id', 'users', 'user_type', 'User')
+          described_class.new('blog_posts', 'user2_id', 'users', type_column: 'user_type', type_value: 'User')
         }.to raise_error(
           PgSeedDump::Configuration::ColumnNotExistsError,
           "Columns user2_id, user_type in table blog_posts doesn't exist"
@@ -70,8 +71,8 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
   describe ".eql?" do
     it "returns true if all params matches" do
-      first  = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
-      second = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
+      first  = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
+      second = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
 
       expect(first.eql?(second)).to be true
       expect(second.eql?(first)).to be true
@@ -100,10 +101,10 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
     it "returns false if matchers doesn't match" do
       a = described_class.new('blog_posts', 'user_id', 'users')
-      b = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
-      c = described_class.new('blog_posts', 'user_id', 'users', 'title', 'my title')
-      d = described_class.new('blog_posts', 'user_id', 'users', 'title', 2)
-      e = described_class.new('blog_posts', 'user_id', 'users', 'id', 'my title')
+      b = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
+      c = described_class.new('blog_posts', 'user_id', 'users', type_column: 'title', type_value: 'my title')
+      d = described_class.new('blog_posts', 'user_id', 'users', type_column: 'title', type_value: 2)
+      e = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 'my title')
 
       [a, b, c, d, e].combination(2).each do |one, other|
         expect(one.eql?(other)).to be false
@@ -113,8 +114,8 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
 
   describe "#hash" do
     it "returns the same hash when all attributes are the same" do
-      first  = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
-      second = described_class.new('blog_posts', 'user_id', 'users', 'id', 1)
+      first  = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
+      second = described_class.new('blog_posts', 'user_id', 'users', type_column: 'id', type_value: 1)
 
       expect(first.hash).to eq second.hash
     end

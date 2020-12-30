@@ -58,26 +58,26 @@ RSpec.describe PgSeedDump do
         end
 
         PgSeedDump.configure do |config|
-          config.seed(:users) do |t|
+          config.seed :users do |t|
             t.query { User.where(id: 100).to_sql }
             t.foreign_key :favourite_section_id, :sections
           end
 
-          config.partial(:sections, process_associated: false)
+          config.partial :sections
 
-          config.partial(:blog_posts) do |t|
-            t.foreign_key :section_id, :sections
+          config.partial :blog_posts do |t|
+            t.foreign_key :section_id, :sections, reverse_processing: false
             t.foreign_key :user_id, :users
           end
 
-          config.partial(:comments) do |t|
+          config.partial :comments do |t|
             t.polymorphic_foreign_key :commentable_id, :commentable_type, {
               users: 'User',
               blog_posts: 'BlogPost'
             }
           end
 
-          config.full(:tags)
+          config.full :tags
         end
       end
 
@@ -113,7 +113,7 @@ RSpec.describe PgSeedDump do
       context "as seed table" do
         it "protects from loading more records than the ones acting as seed", :transactional do
           PgSeedDump.configure do |config|
-            config.seed(:users) do |t|
+            config.seed :users do |t|
               t.query { User.where(id: 1).to_sql }
               t.foreign_key :parent_id, :users
             end
@@ -131,11 +131,11 @@ RSpec.describe PgSeedDump do
       context "not as seed table" do
         it "loads correctly" do
           PgSeedDump.configure do |config|
-            config.seed(:blog_posts) do |t|
+            config.seed :blog_posts do |t|
               t.query { BlogPost.where(id: 1).to_sql }
               t.foreign_key :user_id, :users
             end
-            config.partial(:users) do |t|
+            config.partial :users do |t|
               t.foreign_key :parent_id, :users
             end
           end

@@ -2,11 +2,21 @@ require "tempfile"
 
 RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
   let(:foreign_keys) { [] }
-  let(:table_configuration) do
+  let(:blog_posts_table_configuration) do
     instance_double(
-      "PgSeedDump::TableConfiguration::Full",
+      "PgSeedDump::TableConfiguration::Partial",
       table_name: :blog_posts,
       foreign_keys: foreign_keys,
+      primary_key: :id,
+      sequence_name: "blog_posts_id_seq",
+      full?: false
+    )
+  end
+  let(:users_table_configuration) do
+    instance_double(
+      "PgSeedDump::TableConfiguration::Partial",
+      table_name: :users,
+      foreign_keys: [],
       primary_key: :id,
       sequence_name: "blog_posts_id_seq"
     )
@@ -16,11 +26,11 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
   let(:time) { Time.utc(2020, 12, 28, 0, 0, 0) }
   let(:db_time) { time.strftime("%Y-%m-%d %H:%M:%S") }
 
-  subject { described_class.new(table_configuration, table_dumps) }
+  subject { described_class.new(blog_posts_table_configuration, table_dumps) }
 
   before do
     Timecop.freeze(time) do
-      (1..2).each { |id| User.create(id: id) }
+      (1..3).each { |id| User.create(id: id) }
       Section.create(id: 1)
       BlogPost.create(
         id: 1,
@@ -43,6 +53,7 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
         user_id: 2,
         section_id: nil
       )
+      BlogPost.create(id: 4, user_id: 3)
     end
   end
 
@@ -52,20 +63,22 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
 
       it "registers processed records" do
         subject.process_records([1, 2])
-        expect(table_dumps).to have_received(:record_processed).with(:blog_posts, 1).ordered
-        expect(table_dumps).to have_received(:record_processed).with(:blog_posts, 2).ordered
+        expect(subject.num_records_processed).to eq 2
+      end
+
+      it "skips not existing records" do
+        subject.process_records([1, 100])
+        expect(subject.num_records_processed).to eq 1
       end
 
       it "processes all table records if no ids are provided" do
         subject.process_records
-        expect(table_dumps).to have_received(:record_processed).with(:blog_posts, 1).ordered
-        expect(table_dumps).to have_received(:record_processed).with(:blog_posts, 2).ordered
-        expect(table_dumps).to have_received(:record_processed).with(:blog_posts, 3).ordered
+        expect(subject.num_records_processed).to eq BlogPost.count
       end
 
       it "doesn't process any foreign key" do
         subject.process_records([1])
-        expect(table_dumps).to_not have_received(:add_record_to_process)
+        expect(table_dumps).to_not have_received(:add_records_to_process)
       end
     end
 
@@ -79,21 +92,35 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
 
       it "processes foreign keys with no nils" do
         subject.process_records([1, 2])
-        expect(table_dumps).to have_received(:add_record_to_process).with(:users, 1).ordered
-        expect(table_dumps).to have_received(:add_record_to_process).with(:users, 2).ordered
-        expect(table_dumps).to have_received(:add_record_to_process).with(:sections, 1).twice
+        expect(table_dumps).to have_received(:add_records_to_process).with(:users, [1]).ordered
+        expect(table_dumps).to have_received(:add_records_to_process).with(:users, [2]).ordered
       end
 
       it "processes foreign keys with no nils" do
         subject.process_records([3])
-        expect(table_dumps).to have_received(:add_record_to_process).with(:users, 2)
-        expect(table_dumps).to_not have_received(:add_record_to_process).with(:sections, anything)
+        expect(table_dumps).to have_received(:add_records_to_process).with(:users, [2])
+        expect(table_dumps).to_not have_received(:add_records_to_process).with(:sections, anything)
       end
+    end
+  end
+
+  describe "#process_associated_records" do
+    subject { described_class.new(users_table_configuration, table_dumps) }
+
+    it "process associated user records" do
+      foreign_keys = [PgSeedDump::TableConfiguration::ForeignKey.new(:blog_posts, :user_id, :users)]
+      expect(users_table_configuration).to(
+        receive(:associated_tables).and_yield(blog_posts_table_configuration, foreign_keys)
+      )
+
+      subject.process_associated_records([1, 2])
+      expect(table_dumps).to have_received(:add_records_to_process).with(:blog_posts, [1, 2, 3])
     end
   end
 
   describe "#write_copy_to_file" do
     let(:file) { StringIO.new }
+
     it "does nothing if no records are processed" do
       subject.write_copy_to_file(file)
       file.rewind

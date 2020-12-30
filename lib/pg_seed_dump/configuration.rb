@@ -32,9 +32,8 @@ module PgSeedDump
       end
     end
 
-    def partial(table_name, process_associated: true, &block)
-      opts = { process_associated: process_associated }
-      setup_configuration(TableConfiguration::Partial, table_name, opts, &block).tap do |config|
+    def partial(table_name, &block)
+      setup_configuration(TableConfiguration::Partial, table_name, &block).tap do |config|
         @partial_table_configurations << config
       end
     end
@@ -55,7 +54,7 @@ module PgSeedDump
       table_name = table_name.to_sym
       table_configurations_map.each_value do |table_configuration|
         foreign_keys = table_configuration.foreign_keys.select do |foreign_key|
-          foreign_key.to_table == table_name
+          foreign_key.to_table == table_name && foreign_key.reverse_processing
         end
         block.call(table_configuration, foreign_keys) if foreign_keys.any?
       end
@@ -71,11 +70,11 @@ module PgSeedDump
       raise TableAlreadyDefinedError, "Table #{table_name} has been already defined"
     end
 
-    def setup_configuration(table_configuration_class, table_name, opts = {})
+    def setup_configuration(table_configuration_class, table_name)
       table_name = table_name.to_sym
       prevent_same_table_configuration(table_name)
 
-      table_configuration_class.new(self, table_name, opts).tap do |table_configuration|
+      table_configuration_class.new(self, table_name).tap do |table_configuration|
         table_configurations_map[table_name] = table_configuration
         yield(table_configuration) if block_given?
       end

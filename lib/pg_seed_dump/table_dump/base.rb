@@ -26,9 +26,7 @@ module PgSeedDump
 
         ids_to_be_processed = pending_to_process_ids.dup
         table_copy.process_records(ids_to_be_processed)
-        if table_configuration.process_associated
-          table_copy.process_associated_records(ids_to_be_processed)
-        end
+        table_copy.process_associated_records(ids_to_be_processed)
         ids_to_be_processed.each { |id| record_processed(id) }
       end
 

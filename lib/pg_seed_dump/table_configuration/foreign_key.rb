@@ -3,10 +3,11 @@
 module PgSeedDump
   module TableConfiguration
     class ForeignKey
-      ATTRIBUTES = %i(from_table to_table column_name type_column type_value).freeze
+      ATTRIBUTES = %i(from_table to_table column_name type_column type_value reverse_processing).freeze
       attr_reader *ATTRIBUTES
 
-      def initialize(from_table, column_name, to_table, type_column = nil, type_value = nil)
+      def initialize(from_table, column_name, to_table,
+                     type_column: nil, type_value: nil, reverse_processing: true)
         check_tables_exist!([from_table, to_table])
         check_columns_exist!([column_name, type_column].compact, from_table)
         if type_column.nil? ^ type_value.nil?
@@ -19,6 +20,7 @@ module PgSeedDump
         @column_name = column_name.to_sym
         @type_column = type_column.to_sym if type_column
         @type_value = type_value
+        @reverse_processing = reverse_processing
       end
 
       def eql?(other)
