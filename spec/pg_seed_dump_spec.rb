@@ -83,7 +83,7 @@ RSpec.describe PgSeedDump do
 
       it "Dumps and restores tables correctly" do
         file = Tempfile.new(['', '.dump'])
-        PgSeedDump.dump(file.path)
+        PgSeedDump.dump(file_path: file.path)
         with_dump_file_recover(file.path) do
           expect(User.count).to eq 1
           user = User.last
@@ -123,7 +123,7 @@ RSpec.describe PgSeedDump do
           User.create(id: 2, name: "Name 2", parent_id: 1)
 
           file = Tempfile.new(['', '.dump'])
-          expect { PgSeedDump.dump(file.path) }.to raise_error "Seed table cannot receive new records to process"
+          expect { PgSeedDump.dump(file_path: file.path) }.to raise_error "Seed table cannot receive new records to process"
           file.close!
         end
       end
@@ -148,7 +148,7 @@ RSpec.describe PgSeedDump do
           BlogPost.create(id: 1, user_id: 2)
 
           file = Tempfile.new(['', '.dump'])
-          PgSeedDump.dump(file.path)
+          PgSeedDump.dump(file_path: file.path)
           with_dump_file_recover(file.path) do
             expect(User.count).to eq 3
           end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "pg_seed_dump/support/measure"
 
 module PgSeedDump
   module DB
@@ -6,30 +7,20 @@ module PgSeedDump
       COL_SEP = "\t"
 
       def initialize(query)
-        @query = query
+        @query = query.strip
         @decoder = PG::TextDecoder::String.new
       end
-
-      # def each_row2
-      #   connection = ActiveRecord::Base.connection.raw_connection
-      #   connection.send_query(@query)
-      #   connection.set_single_row_mode
-      #   results = connection.get_result
-      #   @columns ||= Columns.new(results.fields)
-      #   results.stream_each_row do |row|
-      #     yield row, @columns
-      #   end
-      #   connection.get_result # to finish the query
-      # end
 
       def rows
         connection = ActiveRecord::Base.connection.raw_connection
         Enumerator.new do |yielder|
+          measure = Support::Measure.start
           connection.copy_data "COPY (#{@query}) TO STDOUT", @decoder do
             while row = connection.get_copy_data
               yielder << row.strip.split(COL_SEP)
             end
           end
+          Log.debug("[#{measure.elapsed}] query\n#{@query.gsub(/^/, "\t")}")
         end
       end
     end

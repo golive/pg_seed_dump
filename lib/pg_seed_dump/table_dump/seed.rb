@@ -7,12 +7,13 @@ module PgSeedDump
       def add_records_to_process(ids)
         return if (Set.new(ids) - processed_ids).empty?
 
-        raise "Seed table cannot receive new records to process"
+        raise StandardError, "Seed table cannot receive new records to process"
       end
 
       def add_seed_records_to_process(ids)
         if processed_ids.any?
-          raise "Table seed records cannot be added if there are already processed ids"
+          raise StandardError,
+                "Table seed records cannot be added if there are already processed ids"
         end
 
         pending_to_process_ids.merge(ids)

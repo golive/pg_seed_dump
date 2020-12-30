@@ -11,7 +11,8 @@ module PgSeedDump
         check_tables_exist!([from_table, to_table])
         check_columns_exist!([column_name, type_column].compact, from_table)
         if type_column.nil? ^ type_value.nil?
-          raise "Missconfiguration of polymorphic foreign key " \
+          raise StandardError,
+                "Missconfiguration of polymorphic foreign key " \
                 "#{from_table}.#{column_name} => #{to_table}"
         end
 
@@ -55,7 +56,7 @@ module PgSeedDump
 
         raise Configuration::ColumnNotExistsError,
               "Column#{"s" if missing_column_names.size > 1} " \
-              "#{missing_column_names.join(', ')} in table #{table_name} doesn't exist"
+              "#{missing_column_names.join(", ")} in table #{table_name} doesn't exist"
       end
     end
   end

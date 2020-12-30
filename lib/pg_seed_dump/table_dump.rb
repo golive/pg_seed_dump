@@ -1,7 +1,7 @@
 # frozen_string_literal: true
-require "table_dump/full"
-require "table_dump/seed"
-require "table_dump/base"
+require "pg_seed_dump/table_dump/full"
+require "pg_seed_dump/table_dump/seed"
+require "pg_seed_dump/table_dump/base"
 
 module PgSeedDump
   module TableDump

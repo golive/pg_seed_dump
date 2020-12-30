@@ -44,5 +44,6 @@ def with_dump_file_recover(file_path)
   end
   system "psql -q -d #{DATABASE_NAME} < #{file_path} > /dev/null 2>&1"
   yield
+ensure
   Schema.load
 end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require "table_dump"
+require "pg_seed_dump/table_dump"
 
 module PgSeedDump
   class TableDumps

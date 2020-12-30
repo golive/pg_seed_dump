@@ -1,7 +1,7 @@
 # frozen_string_literal: true
-require 'table_configuration/seed'
-require 'table_configuration/full'
-require 'table_configuration/partial'
+require "pg_seed_dump/table_configuration/seed"
+require "pg_seed_dump/table_configuration/full"
+require "pg_seed_dump/table_configuration/partial"
 
 module PgSeedDump
   class Configuration

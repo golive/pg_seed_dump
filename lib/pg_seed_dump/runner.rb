@@ -1,8 +1,9 @@
 # frozen_string_literal: true
-require "table_dumps"
-require "table_configuration/full"
-require "db/query"
-require "file_dump"
+require "pg_seed_dump/table_dumps"
+require "pg_seed_dump/table_configuration/full"
+require "pg_seed_dump/db/query"
+require "pg_seed_dump/file_dump"
+require "pg_seed_dump/support/measure"
 
 module PgSeedDump
   class Runner
@@ -17,13 +18,17 @@ module PgSeedDump
     end
 
     def dump!
+      Log.info "Starting dump..."
       # TODO: Validate configuration
 
-      # add_schema_migrations_table_to_configuration
-      prepare_seed_tables
-      dump_tables
-      dump_full_tables
+      measure = Support::Measure.start
+      ActiveRecord::Base.transaction do
+        prepare_seed_tables
+        dump_tables
+        dump_full_tables
+      end
       dump_to_file
+      Log.info "Done in #{measure.elapsed}"
     end
 
     private
@@ -65,6 +70,7 @@ module PgSeedDump
     end
 
     def dump_to_file
+      Log.info "Dumping to file #{file_path}"
       FileDump.new(configuration, table_dumps).dump_to(file_path)
     end
   end

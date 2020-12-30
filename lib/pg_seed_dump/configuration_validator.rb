@@ -19,7 +19,7 @@ module PgSeedDump
     def validate_seed_tables_with_query
       return if configuration.seed_table_configurations.all?(&:query)
 
-      raise "Some seed tables doesn't have a query defined"
+      raise StandardError, "Some seed tables doesn't have a query defined"
     end
 
     def validate_associations
@@ -28,7 +28,8 @@ module PgSeedDump
         table_configuration.foreign_keys.each do |foreign_key|
           next if configured_tables.includes?(foreign_key.to_table)
 
-          raise "Associated table #{foreign_key.to_table} in " \
+          raise StandardError,
+                "Associated table #{foreign_key.to_table} in " \
                 "#{foreign_key.from_table}.#{foreign_key.column_name} doesn't exist"
         end
       end
@@ -57,7 +58,7 @@ module PgSeedDump
 
         if missing_foreign_keys.any?
           # TODO: pending
-          raise "Missing foreign keys"
+          raise StandardError, "Missing foreign keys"
         end
       end
     end

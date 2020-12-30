@@ -18,7 +18,7 @@ module PgSeedDump
       end
 
       def to_s
-        @columns.join(',')
+        @columns.join(", ")
       end
     end
   end

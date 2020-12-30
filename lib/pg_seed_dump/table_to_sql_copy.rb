@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "tempfile"
-require "db/query"
-require "db/table_columns"
+require "pg_seed_dump/db/query"
+require "pg_seed_dump/db/table_columns"
 
 module PgSeedDump
   class TableToSqlCopy
@@ -20,6 +20,7 @@ module PgSeedDump
     end
 
     def process_records(ids = nil)
+      num_records = 0
       DB::Query.new(query_for([*ids])).rows.each do |row|
         process_foreign_keys(row)
 
@@ -28,9 +29,11 @@ module PgSeedDump
         tempfile.puts row.join("\t")
 
         id = columns.value_at(row, :id).to_i
-        @num_records_processed += 1
+        num_records += 1
         @max_id = [@max_id, id].max
       end
+      @num_records_processed += num_records
+      Log.info(table_name.to_s.cyan) { "Processed #{num_records} record#{"s" if num_records > 1}" }
     end
 
     def process_all_records
@@ -58,7 +61,6 @@ module PgSeedDump
       file.puts '\.'
       file.puts "\n"
       file.puts sequence_sync
-      file.puts "\n"
       tempfile.unlink
     end
 
@@ -76,7 +78,7 @@ module PgSeedDump
 
     def query_for_associated(ids, associated_table_configuration, foreign_keys)
       sql_conditions = foreign_keys.map do |foreign_key|
-        "(#{foreign_key.column_name} IN (#{ids.to_a.join(',')}))"
+        "#{foreign_key.column_name} IN (#{ids.to_a.join(",")})"
       end
       <<~SQL
         SELECT #{associated_table_configuration.primary_key}
@@ -107,7 +109,7 @@ module PgSeedDump
     def sequence_sync
       return unless table_configuration.sequence_name
 
-      "SELECT pg_catalog.setval('public.#{table_configuration.sequence_name}', #{@max_id});"
+      "SELECT pg_catalog.setval('public.#{table_configuration.sequence_name}', #{@max_id});\n\n"
     end
   end
 end

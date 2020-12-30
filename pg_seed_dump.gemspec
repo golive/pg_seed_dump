@@ -36,10 +36,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = [
     "lib",
-    "lib/pg_seed_dump",
-    "lib/pg_seed_dump/db",
-    "lib/pg_seed_dump/table_configuration",
-    "lib/pg_seed_dump/table_dump"
+    "lib/pg_seed_dump"
   ]
 
   spec.add_dependency "activerecord", ">= 4.2.0"

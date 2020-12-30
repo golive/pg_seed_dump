@@ -42,17 +42,26 @@ module PgSeedDump
       return @pg_dump_params if defined?(@pg_dump_params)
 
       params = []
-      config = ActiveRecord::Base.connection_db_config.configuration_hash
-      params << "-d #{config[:database]}"
+      params << "-d #{db_config[:database]}"
       configuration.configured_tables.each do |table_name|
         params << "-t #{table_name}"
       end
-      params << "-U #{config[:username]}" if config[:username]
-      params << "-h #{config[:host]}" if config[:host]
-      params << "-w #{config[:password]}" if config[:password]
-      params << "-p #{config[:port]}" if config[:port]
+      params << "-U #{db_config[:username]}" if db_config[:username]
+      params << "-h #{db_config[:host]}" if db_config[:host]
+      params << "-w #{db_config[:password]}" if db_config[:password]
+      params << "-p #{db_config[:port]}" if db_config[:port]
 
       @pg_dump_params = params.join(" ")
+    end
+
+    def db_config
+      @db_config ||= begin
+        if ActiveRecord::Base.respond_to?(:connection_db_config)
+          return ActiveRecord::Base.connection_db_config.configuration_hash
+        end
+
+        ActiveRecord::Base.connection_config
+      end
     end
   end
 end

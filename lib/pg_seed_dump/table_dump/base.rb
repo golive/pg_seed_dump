@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require "table_to_sql_copy"
+require "pg_seed_dump/table_to_sql_copy"
 
 module PgSeedDump
   module TableDump
