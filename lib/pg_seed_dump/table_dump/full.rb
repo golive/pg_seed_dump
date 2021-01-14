@@ -4,22 +4,26 @@ require_relative "base"
 module PgSeedDump
   module TableDump
     class Full < Base
-      attr_writer :run_full_dump
-
       def initialize(*)
         super
-        @run_full_dump = false
+        @full_mode = false
+        @fully_dumped = false
+      end
+
+      def add_records_to_process(ids)
+        return 0 if @full_mode
+        super
       end
 
       def pending_to_process_records?
-        super || run_full_dump
+        !@fully_dumped && (super || @full_mode)
       end
 
       def dump_pending_records
         ids_to_be_processed = pending_to_process_ids.dup
-        if run_full_dump
+        if @full_mode && !@fully_dumped
           table_copy.process_all_records
-          self.run_full_dump = false
+          @fully_dumped = true
         end
         return unless ids_to_be_processed.any?
 
@@ -27,9 +31,9 @@ module PgSeedDump
         ids_to_be_processed.each { |id| record_processed(id) }
       end
 
-      private
-
-      attr_reader :run_full_dump
+      def enable_full_mode
+        @full_mode = true
+      end
     end
   end
 end

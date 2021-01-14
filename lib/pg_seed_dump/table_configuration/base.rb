@@ -1,12 +1,13 @@
 # frozen_string_literal: true
-require_relative 'foreign_key'
+require_relative "foreign_key"
+require_relative "column_transform"
 
 module PgSeedDump
   module TableConfiguration
     class Base
-      attr_reader :table_name, :foreign_keys, :sequence_name
+      attr_reader :table_name, :foreign_keys, :transforms, :sequence_name
 
-      def initialize(configuration, table_name)
+      def initialize(configuration, table_name, _options = {})
         unless ::ActiveRecord::Base.connection.table_exists?(table_name)
           raise Configuration::TableNotExistsError,
                 "Table #{table_name} doesn't exist"
@@ -14,8 +15,9 @@ module PgSeedDump
         @configuration = configuration
         @table_name = table_name.to_sym
         @foreign_keys = Set.new
+        @transforms = []
         primary_key, sequence = ActiveRecord::Base.connection.pk_and_sequence_for(table_name)
-        @primary_key = primary_key&.to_sym
+        @primary_key = primary_key&.to_sym || :id
         @sequence_name = sequence&.identifier
       end
 
@@ -58,7 +60,7 @@ module PgSeedDump
       end
 
       def transform(attribute, &block)
-        # pending
+        @transforms << ColumnTransform.new(attribute, block)
       end
     end
   end

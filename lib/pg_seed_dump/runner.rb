@@ -29,49 +29,59 @@ module PgSeedDump
       end
       dump_to_file
       Log.info "Done in #{measure.elapsed}"
+
+      log_table_statistics
     end
 
     private
 
-    attr_reader :configuration, :file_path, :table_dumps
-
     def add_schema_migrations_table_to_configuration
-      return if configuration.configured_tables.include?(:schema_migrations)
+      return if @configuration.configured_tables.include?(:schema_migrations)
 
-      configuration.full(:schema_migrations)
+      @configuration.full(:schema_migrations)
     end
 
     def prepare_seed_tables
-      configuration.seed_table_configurations.each do |table_configuration|
-        next unless table_configuration.query
+      @configuration.seed_table_configurations.each do |table_configuration|
+        Log.debug "Prepare seed #{table_configuration.table_name} table"
+        next unless table_configuration.seed_query
 
-        query = "SELECT #{table_configuration.primary_key} FROM (#{table_configuration.query}) s"
+        query = "SELECT #{table_configuration.primary_key} FROM (#{table_configuration.seed_query}) s"
         ids = DB::Query.new(query).rows.map { |row| row[0].to_i }
-        table_dumps.add_seed_records_to_process(table_configuration.table_name, ids)
+        @table_dumps.add_seed_records_to_process(table_configuration.table_name, ids)
       end
     end
 
     def dump_tables
-      return if table_dumps.all_processed?
+      return if @table_dumps.all_processed?
+      Log.debug "Dumping tables"
 
-      table_dumps.pending_to_process.each(&:dump_pending_records)
+      @table_dumps.pending_to_process.each(&:dump_pending_records)
 
       dump_tables # recursive until there are no more records to load
     end
 
     def dump_full_tables
-      table_dumps.pending_to_full_process.each do |table_dump|
-        table_dump.run_full_dump = true
-        table_dump.dump_pending_records
-      end
+      Log.debug "Dumping full tables"
+      @table_dumps.pending_to_full_process.each(&:enable_full_mode)
 
       # New records loaded from full tables might have foreign keys
       dump_tables
     end
 
     def dump_to_file
-      Log.info "Dumping to file #{file_path}"
-      FileDump.new(configuration, table_dumps).dump_to(file_path)
+      Log.info "Dumping to file #{@file_path}"
+      FileDump.new(@configuration, @table_dumps).dump_to(@file_path)
+    end
+
+    def log_table_statistics
+      Log.info "Dumped records per table:\n"
+      statistics = @table_dumps.processed.map do |table_dump|
+         [table_dump.num_records_processed, table_dump.table_configuration.table_name]
+      end.sort.reverse
+      statistics.each do |(num_records, table_name)|
+        Log.info "#{num_records.to_s.rjust(9)} #{table_name}"
+      end
     end
   end
 end

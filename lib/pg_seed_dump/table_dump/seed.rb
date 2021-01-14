@@ -5,9 +5,11 @@ module PgSeedDump
   module TableDump
     class Seed < Base
       def add_records_to_process(ids)
-        return if (Set.new(ids) - processed_ids).empty?
+        return super(ids) if table_configuration.can_grow?
+        return 0 if (Set.new(ids) - processed_ids).empty?
 
-        raise StandardError, "Seed table cannot receive new records to process"
+        raise StandardError,
+              "Seed table #{table_configuration.table_name} cannot receive new records for processing"
       end
 
       def add_seed_records_to_process(ids)

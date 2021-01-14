@@ -19,8 +19,6 @@ module PgSeedDump
 
     private
 
-    attr_reader :configuration, :table_dumps
-
     def run_pg_dump(section)
       IO.popen("pg_dump #{pg_dump_params} --format=plain --section=#{section}").read
     end
@@ -30,7 +28,7 @@ module PgSeedDump
     end
 
     def write_data(file)
-      table_dumps.dump_all_processed_to_file(file)
+      @table_dumps.dump_all_processed_to_file(file)
       # TODO: write sequence sync. Ex: SELECT pg_catalog.setval('public.users_id_seq', 1);
     end
 
@@ -43,7 +41,7 @@ module PgSeedDump
 
       params = []
       params << "-d #{db_config[:database]}"
-      configuration.configured_tables.each do |table_name|
+      @configuration.configured_tables.each do |table_name|
         params << "-t #{table_name}"
       end
       params << "-U #{db_config[:username]}" if db_config[:username]

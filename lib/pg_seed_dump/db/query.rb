@@ -14,13 +14,11 @@ module PgSeedDump
       def rows
         connection = ActiveRecord::Base.connection.raw_connection
         Enumerator.new do |yielder|
-          measure = Support::Measure.start
           connection.copy_data "COPY (#{@query}) TO STDOUT", @decoder do
             while row = connection.get_copy_data
               yielder << row.strip.split(COL_SEP)
             end
           end
-          Log.debug("[#{measure.elapsed}] query\n#{@query.gsub(/^/, "\t")}")
         end
       end
     end

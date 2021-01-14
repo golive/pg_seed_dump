@@ -14,11 +14,21 @@ module PgSeedDump
       end
 
       def value_at(row, column_name)
-        row[@column_positions[column_name.to_sym]]
+        row[index(column_name)]
+      end
+
+      def set_value(row, column_name, value)
+        row[index(column_name)] = value
       end
 
       def to_s
-        @columns.join(", ")
+        @columns.map { |column| %("#{column}") }.join(", ")
+      end
+
+      private
+
+      def index(column_name)
+        @column_positions.fetch(column_name.to_sym)
       end
     end
   end
