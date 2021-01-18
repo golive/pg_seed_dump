@@ -7,7 +7,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
       expect(foreign_key.to_table).to eq :users
       expect(foreign_key.type_column).to be_nil
       expect(foreign_key.type_value).to be_nil
-      expect(foreign_key.reverse_processing).to be true
+      expect(foreign_key.pull).to be true
       expect(foreign_key).to_not be_polymorphic
     end
 

@@ -66,7 +66,7 @@ RSpec.describe PgSeedDump do
           config.partial :sections
 
           config.partial :blog_posts do |t|
-            t.foreign_key :section_id, :sections, reverse_processing: false
+            t.foreign_key :section_id, :sections, pull: false
             t.foreign_key :user_id, :users
           end
 

@@ -42,20 +42,20 @@ module PgSeedDump
         @primary_key
       end
 
-      def foreign_key(id_column, to_table, type_column: nil, type_value: nil, reverse_processing: true)
+      def foreign_key(id_column, to_table, type_column: nil, type_value: nil, pull: true)
         ForeignKey.new(table_name, id_column, to_table, type_column: type_column,
-                       type_value: type_value, reverse_processing: reverse_processing).tap do |foreign_key|
+                       type_value: type_value, pull: pull).tap do |foreign_key|
           @foreign_keys << foreign_key
         end
       end
 
-      def polymorphic_foreign_key(id_column, type_column, table_types_map, reverse_processing: true)
+      def polymorphic_foreign_key(id_column, type_column, table_types_map, pull: true)
         if table_types_map.empty?
           raise StandardError, "Add at least one table to type map in #{table_name}.#{id_column}"
         end
         table_types_map.map do |to_table, value|
           foreign_key(id_column, to_table, type_column: type_column,
-                      type_value: value, reverse_processing: reverse_processing)
+                      type_value: value, pull: pull)
         end
       end
 

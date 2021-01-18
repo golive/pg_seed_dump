@@ -54,7 +54,7 @@ module PgSeedDump
       table_name = table_name.to_sym
       @table_configurations_map.each_value do |table_configuration|
         foreign_keys = table_configuration.foreign_keys.select do |foreign_key|
-          foreign_key.to_table == table_name && foreign_key.reverse_processing
+          foreign_key.to_table == table_name && foreign_key.pull
         end
         block.call(table_configuration, foreign_keys) if foreign_keys.any?
       end

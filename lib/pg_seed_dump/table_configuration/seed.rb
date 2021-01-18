@@ -23,7 +23,7 @@ module PgSeedDump
       end
 
       def foreign_key(id_column, to_table, type_column: nil, type_value: nil)
-        super(id_column, to_table, type_column: type_column, type_value: type_value, reverse_processing: false)
+        super(id_column, to_table, type_column: type_column, type_value: type_value, pull: false)
       end
     end
   end
