@@ -42,7 +42,7 @@ module PgSeedDump
         @primary_key
       end
 
-      def foreign_key(id_column, to_table, type_column: nil, type_value: nil, pull: true)
+      def foreign_key(to_table, id_column, type_column: nil, type_value: nil, pull: true)
         ForeignKey.new(table_name, id_column, to_table, type_column: type_column,
                        type_value: type_value, pull: pull).tap do |foreign_key|
           @foreign_keys << foreign_key
@@ -54,7 +54,7 @@ module PgSeedDump
           raise StandardError, "Add at least one table to type map in #{table_name}.#{id_column}"
         end
         table_types_map.map do |to_table, value|
-          foreign_key(id_column, to_table, type_column: type_column,
+          foreign_key(to_table, id_column, type_column: type_column,
                       type_value: value, pull: pull)
         end
       end
