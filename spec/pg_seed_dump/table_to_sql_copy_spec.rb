@@ -9,7 +9,8 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
       foreign_keys: foreign_keys,
       primary_key: :id,
       sequence_name: "blog_posts_id_seq",
-      full?: false
+      full?: false,
+      transforms: []
     )
   end
   let(:users_table_configuration) do
@@ -18,7 +19,8 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
       table_name: :users,
       foreign_keys: [],
       primary_key: :id,
-      sequence_name: "blog_posts_id_seq"
+      sequence_name: "blog_posts_id_seq",
+      transforms: []
     )
   end
 
@@ -132,7 +134,7 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
       subject.write_copy_to_file(file)
       file.rewind
       expect(file.read).to eq(
-        "COPY public.blog_posts (id, title, content, user_id, section_id, featured, created_at, updated_at) FROM stdin;\n" \
+        %[COPY public.blog_posts ("id", "title", "content", "user_id", "section_id", "featured", "created_at", "updated_at") FROM stdin;\n] \
         "1	My first\\tblog post	A lot of content	1	1	f	#{db_time}	#{db_time}\n" \
         "2	My second\\nblog post	Amazing stuff	2	1	f	#{db_time}	#{db_time}\n" \
         "\\.\n\n" \

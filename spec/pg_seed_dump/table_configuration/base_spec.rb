@@ -20,7 +20,7 @@ RSpec.describe PgSeedDump::TableConfiguration::Base do
     subject { described_class.new(configuration, "blog_posts") }
 
     it "stores a foreign key" do
-      foreign_key = subject.foreign_key "user_id", "users"
+      foreign_key = subject.foreign_key "users", "user_id"
       expect(subject.foreign_keys).to contain_exactly(foreign_key)
       expect(foreign_key.from_table).to eq :blog_posts
       expect(foreign_key.column_name).to eq :user_id
@@ -28,9 +28,9 @@ RSpec.describe PgSeedDump::TableConfiguration::Base do
     end
 
     it "doesn't duplicate already defined foreign keys" do
-      subject.foreign_key "user_id", "users"
+      subject.foreign_key "users", "user_id"
       expect(subject.foreign_keys.size).to eq 1
-      expect { subject.foreign_key("user_id", "users") }.to_not change { subject.foreign_keys.size }
+      expect { subject.foreign_key("users", "user_id") }.to_not change { subject.foreign_keys.size }
     end
   end
 

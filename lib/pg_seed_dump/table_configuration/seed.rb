@@ -6,7 +6,7 @@ module PgSeedDump
     class Seed < Base
       def initialize(configuration, table_name, options = {})
         super
-        @can_grow = options.fetch(:can_grow) { false }
+        @can_grow = options.fetch(:can_grow, false)
       end
 
       def can_grow?

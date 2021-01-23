@@ -59,15 +59,15 @@ RSpec.describe PgSeedDump do
 
         PgSeedDump.configure do |config|
           config.seed :users do |t|
-            t.query { User.where(id: 100).to_sql }
-            t.foreign_key :favourite_section_id, :sections
+            t.seed_query { User.where(id: 100).to_sql }
+            t.foreign_key :sections, :favourite_section_id
           end
 
           config.partial :sections
 
           config.partial :blog_posts do |t|
-            t.foreign_key :section_id, :sections, pull: false
-            t.foreign_key :user_id, :users
+            t.foreign_key :sections, :section_id, pull: false
+            t.foreign_key :users, :user_id
           end
 
           config.partial :comments do |t|
@@ -114,8 +114,8 @@ RSpec.describe PgSeedDump do
         it "protects from loading more records than the ones acting as seed", :transactional do
           PgSeedDump.configure do |config|
             config.seed :users do |t|
-              t.query { User.where(id: 1).to_sql }
-              t.foreign_key :parent_id, :users
+              t.seed_query { User.where(id: 2).to_sql }
+              t.foreign_key :users, :parent_id
             end
           end
 
@@ -123,7 +123,9 @@ RSpec.describe PgSeedDump do
           User.create(id: 2, name: "Name 2", parent_id: 1)
 
           file = Tempfile.new(['', '.dump'])
-          expect { PgSeedDump.dump(file_path: file.path) }.to raise_error "Seed table cannot receive new records to process"
+          expect { PgSeedDump.dump(file_path: file.path) }.to(
+            raise_error(StandardError, "Seed table users cannot receive new records for processing")
+          )
           file.close!
         end
       end
@@ -132,11 +134,11 @@ RSpec.describe PgSeedDump do
         it "loads correctly" do
           PgSeedDump.configure do |config|
             config.seed :blog_posts do |t|
-              t.query { BlogPost.where(id: 1).to_sql }
-              t.foreign_key :user_id, :users
+              t.seed_query { BlogPost.where(id: 1).to_sql }
+              t.foreign_key :users, :user_id
             end
             config.partial :users do |t|
-              t.foreign_key :parent_id, :users
+              t.foreign_key :users, :parent_id
             end
           end
 
