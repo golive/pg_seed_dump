@@ -1,23 +1,23 @@
 RSpec.describe PgSeedDump::TableConfiguration::Base do
-  let(:configuration) { instance_double("PgSeedDump::Configuration") }
+  let(:schema) { instance_double("PgSeedDump::Schema") }
 
   describe ".new" do
     it "raises an error if table doesn't exist" do
-      expect { described_class.new(configuration, "users2") }.to raise_error(
-        PgSeedDump::Configuration::TableNotExistsError,
+      expect { described_class.new(schema, "users2") }.to raise_error(
+        PgSeedDump::Schema::TableNotExistsError,
         "Table users2 doesn't exist"
       )
     end
 
     it "initializes correctly" do
-      table_configuration = described_class.new(configuration, "users")
+      table_configuration = described_class.new(schema, "users")
       expect(table_configuration.table_name).to eq :users
       expect(table_configuration.foreign_keys).to be_empty
     end
   end
 
   describe "#foreign_key" do
-    subject { described_class.new(configuration, "blog_posts") }
+    subject { described_class.new(schema, "blog_posts") }
 
     it "stores a foreign key" do
       foreign_key = subject.foreign_key "users", "user_id"
@@ -35,7 +35,7 @@ RSpec.describe PgSeedDump::TableConfiguration::Base do
   end
 
   describe "#polymorphic_foreign_key" do
-    subject { described_class.new(configuration, "comments") }
+    subject { described_class.new(schema, "comments") }
 
     it "raises an error if matchers are empty" do
       expect {

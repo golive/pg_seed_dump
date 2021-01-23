@@ -7,12 +7,12 @@ module PgSeedDump
     class Base
       attr_reader :table_name, :foreign_keys, :transforms, :sequence_name
 
-      def initialize(configuration, table_name, _options = {})
+      def initialize(schema, table_name, _options = {})
         unless ::ActiveRecord::Base.connection.table_exists?(table_name)
-          raise Configuration::TableNotExistsError,
+          raise Schema::TableNotExistsError,
                 "Table #{table_name} doesn't exist"
         end
-        @configuration = configuration
+        @schema = schema
         @table_name = table_name.to_sym
         @foreign_keys = Set.new
         @transforms = []
@@ -34,7 +34,7 @@ module PgSeedDump
       end
 
       def associated_tables(&block)
-        @configuration.associated_to_table(table_name, &block)
+        @schema.associated_to_table(table_name, &block)
       end
 
       def primary_key(column_name = nil)

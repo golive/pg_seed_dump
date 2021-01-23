@@ -15,7 +15,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
       expect {
         described_class.new('blog_posts2', 'user_id', 'users')
       }.to raise_error(
-        PgSeedDump::Configuration::TableNotExistsError,
+        PgSeedDump::Schema::TableNotExistsError,
         "Table blog_posts2 doesn't exist"
       )
     end
@@ -24,7 +24,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
       expect {
         described_class.new('blog_posts', 'user_id', 'users2')
       }.to raise_error(
-        PgSeedDump::Configuration::TableNotExistsError,
+        PgSeedDump::Schema::TableNotExistsError,
         "Table users2 doesn't exist"
       )
     end
@@ -33,7 +33,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
       expect {
         described_class.new('blog_posts', 'user2_id', 'users')
       }.to raise_error(
-        PgSeedDump::Configuration::ColumnNotExistsError,
+        PgSeedDump::Schema::ColumnNotExistsError,
         "Column user2_id in table blog_posts doesn't exist"
       )
     end
@@ -53,7 +53,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
         expect {
           described_class.new('blog_posts', 'user_id', 'users', type_column: 'user_type', type_value: 'User')
         }.to raise_error(
-          PgSeedDump::Configuration::ColumnNotExistsError,
+          PgSeedDump::Schema::ColumnNotExistsError,
           "Column user_type in table blog_posts doesn't exist"
         )
       end
@@ -62,7 +62,7 @@ RSpec.describe PgSeedDump::TableConfiguration::ForeignKey do
         expect {
           described_class.new('blog_posts', 'user2_id', 'users', type_column: 'user_type', type_value: 'User')
         }.to raise_error(
-          PgSeedDump::Configuration::ColumnNotExistsError,
+          PgSeedDump::Schema::ColumnNotExistsError,
           "Columns user2_id, user_type in table blog_posts doesn't exist"
         )
       end

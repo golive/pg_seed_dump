@@ -2,8 +2,8 @@
 
 module PgSeedDump
   class FileDump
-    def initialize(configuration, table_dumps)
-      @configuration = configuration
+    def initialize(schema, table_dumps)
+      @schema = schema
       @table_dumps = table_dumps
     end
 
@@ -29,7 +29,6 @@ module PgSeedDump
 
     def write_data(file)
       @table_dumps.dump_all_processed_to_file(file)
-      # TODO: write sequence sync. Ex: SELECT pg_catalog.setval('public.users_id_seq', 1);
     end
 
     def write_post_data(file)
@@ -41,7 +40,7 @@ module PgSeedDump
 
       params = []
       params << "-d #{db_config[:database]}"
-      @configuration.configured_tables.each do |table_name|
+      @schema.configured_tables.each do |table_name|
         params << "-t #{table_name}"
       end
       params << "-U #{db_config[:username]}" if db_config[:username]

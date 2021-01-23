@@ -7,19 +7,19 @@ require "pg_seed_dump/support/measure"
 
 module PgSeedDump
   class Runner
-    def self.dump!(configuration, file_path)
-      new(configuration, file_path).dump!
+    def self.dump!(schema, file_path)
+      new(schema, file_path).dump!
     end
 
-    def initialize(configuration, file_path)
-      @configuration = configuration
+    def initialize(schema, file_path)
+      @schema = schema
       @file_path = file_path
-      @table_dumps = TableDumps.new(configuration.table_configurations)
+      @table_dumps = TableDumps.new(schema.table_configurations)
     end
 
     def dump!
       Log.info "Starting dump..."
-      # TODO: Validate configuration
+      # TODO: Validate schema
 
       measure = Support::Measure.start
       ActiveRecord::Base.transaction do
@@ -36,13 +36,13 @@ module PgSeedDump
     private
 
     def add_schema_migrations_table_to_configuration
-      return if @configuration.configured_tables.include?(:schema_migrations)
+      return if @schema.configured_tables.include?(:schema_migrations)
 
-      @configuration.full(:schema_migrations)
+      @schema.full(:schema_migrations)
     end
 
     def prepare_seed_tables
-      @configuration.seed_table_configurations.each do |table_configuration|
+      @schema.seed_table_configurations.each do |table_configuration|
         Log.debug "Prepare seed #{table_configuration.table_name} table"
         next unless table_configuration.seed_query
 
@@ -71,7 +71,7 @@ module PgSeedDump
 
     def dump_to_file
       Log.info "Dumping to file #{@file_path}"
-      FileDump.new(@configuration, @table_dumps).dump_to(@file_path)
+      FileDump.new(@schema, @table_dumps).dump_to(@file_path)
     end
 
     def log_table_statistics

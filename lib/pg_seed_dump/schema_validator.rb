@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module PgSeedDump
-  class ConfigurationValidator
-    def initialize(configuration)
-      @configuration = configuration
+  class SchemaValidator
+    def initialize(schema)
+      @schema = schema
     end
 
     def validate!
@@ -15,14 +15,14 @@ module PgSeedDump
     private
 
     def validate_seed_tables_with_query
-      return if @configuration.seed_table_configurations.all?(&:query)
+      return if @schema.seed_table_configurations.all?(&:query)
 
       raise StandardError, "Some seed tables doesn't have a query defined"
     end
 
     def validate_associations
-      configured_tables = @configuration.configured_tables
-      @configuration.table_configurations.each do |table_configuration|
+      configured_tables = @schema.configured_tables
+      @schema.table_configurations.each do |table_configuration|
         table_configuration.foreign_keys.each do |foreign_key|
           next if configured_tables.includes?(foreign_key.to_table)
 
@@ -34,7 +34,7 @@ module PgSeedDump
     end
 
     def check_missing_associations
-      @configuration.table_configurations.each do |table_configuration|
+      @schema.table_configurations.each do |table_configuration|
         configured_foreign_keys = table_configuration.foreign_keys.map do |foreign_key|
           next if foreign_key.polymorphic?
 

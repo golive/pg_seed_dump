@@ -43,7 +43,7 @@ module PgSeedDump
       def check_tables_exist!(table_names)
         table_names.each do |table_name|
           unless ActiveRecord::Base.connection.table_exists?(table_name)
-            raise Configuration::TableNotExistsError, "Table #{table_name} doesn't exist"
+            raise Schema::TableNotExistsError, "Table #{table_name} doesn't exist"
           end
         end
       end
@@ -54,7 +54,7 @@ module PgSeedDump
         end
         return if missing_column_names.empty?
 
-        raise Configuration::ColumnNotExistsError,
+        raise Schema::ColumnNotExistsError,
               "Column#{"s" if missing_column_names.size > 1} " \
               "#{missing_column_names.join(", ")} in table #{table_name} doesn't exist"
       end

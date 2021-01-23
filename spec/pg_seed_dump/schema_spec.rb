@@ -1,4 +1,4 @@
-RSpec.describe PgSeedDump::Configuration do
+RSpec.describe PgSeedDump::Schema do
   subject { described_class.new }
 
   describe "initializer" do
@@ -12,7 +12,7 @@ RSpec.describe PgSeedDump::Configuration do
   shared_examples "common examples" do |type|
     it "raises error if table doesn't exist" do
       expect { subject.public_send(type, "inexistent_table") }.to raise_error(
-        PgSeedDump::Configuration::TableNotExistsError,
+        PgSeedDump::Schema::TableNotExistsError,
         "Table inexistent_table doesn't exist"
       )
     end
@@ -34,7 +34,7 @@ RSpec.describe PgSeedDump::Configuration do
     it "raises error if table already configured" do
       subject.public_send(type, "users")
       expect { subject.public_send(type, "users") }.to raise_error(
-        PgSeedDump::Configuration::TableAlreadyDefinedError,
+        PgSeedDump::Schema::TableAlreadyDefinedError,
         "Table users has been already defined"
       )
     end

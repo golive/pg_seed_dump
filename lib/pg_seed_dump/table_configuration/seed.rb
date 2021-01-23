@@ -4,7 +4,7 @@ require_relative 'base'
 module PgSeedDump
   module TableConfiguration
     class Seed < Base
-      def initialize(configuration, table_name, options = {})
+      def initialize(schema, table_name, options = {})
         super
         @can_grow = options.fetch(:can_grow, false)
       end

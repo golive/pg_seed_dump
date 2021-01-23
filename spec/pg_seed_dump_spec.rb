@@ -6,9 +6,9 @@ RSpec.describe PgSeedDump do
   end
 
   describe ".configure" do
-    it "always yields the same configuration object" do
+    it "always yields the same schema object" do
       PgSeedDump.configure do |config|
-        expect(config).to be_an_instance_of(PgSeedDump::Configuration)
+        expect(config).to be_an_instance_of(PgSeedDump::Schema)
         PgSeedDump.configure do |other_config|
           expect(other_config.object_id).to eq config.object_id
         end
@@ -16,11 +16,11 @@ RSpec.describe PgSeedDump do
     end
   end
 
-  describe ".configuration" do
-    it "always returns the same configuration object" do
-      config = PgSeedDump.configuration
-      expect(config).to be_an_instance_of(PgSeedDump::Configuration)
-      expect(config.object_id).to eq PgSeedDump.configuration.object_id
+  describe ".schema" do
+    it "always returns the same schema object" do
+      schema = PgSeedDump.schema
+      expect(schema).to be_an_instance_of(PgSeedDump::Schema)
+      expect(schema.object_id).to eq PgSeedDump.schema.object_id
     end
   end
 
@@ -28,8 +28,8 @@ RSpec.describe PgSeedDump do
     let(:time) { Time.utc(2020, 12, 28, 0, 0, 0, 0) }
 
     before do
-      # To avoid sharing the configuration between examples
-      allow(PgSeedDump).to receive(:configuration).and_return(PgSeedDump::Configuration.new)
+      # To avoid sharing the schema between examples
+      allow(PgSeedDump).to receive(:schema).and_return(PgSeedDump::Schema.new)
     end
 
     context "full example" do

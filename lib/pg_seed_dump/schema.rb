@@ -4,7 +4,7 @@ require "pg_seed_dump/table_configuration/full"
 require "pg_seed_dump/table_configuration/partial"
 
 module PgSeedDump
-  class Configuration
+  class Schema
     attr_reader :seed_table_configurations,
                 :full_table_configurations,
                 :partial_table_configurations
