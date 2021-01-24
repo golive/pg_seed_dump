@@ -20,14 +20,14 @@ module PgSeedDump
       end
 
       def dump_pending_records
-        ids_to_be_processed = pending_to_process_ids.dup
+        ids_to_be_processed = @pending_to_process_ids.dup
         if @full_mode && !@fully_dumped
-          table_copy.process_all_records
+          @table_copy.process_all_records
           @fully_dumped = true
         end
         return unless ids_to_be_processed.any?
 
-        table_copy.process_associated_records(ids_to_be_processed)
+        @table_copy.process_associated_records(ids_to_be_processed)
         ids_to_be_processed.each { |id| record_processed(id) }
       end
 

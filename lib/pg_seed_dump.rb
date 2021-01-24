@@ -4,10 +4,11 @@ require "pg_seed_dump/version"
 require "pg_seed_dump/schema"
 require "pg_seed_dump/runner"
 require "pg_seed_dump/log"
+require "pg_seed_dump/schema/dsl"
 
 module PgSeedDump
   def self.configure
-    yield schema
+    yield Schema::Dsl.new(schema)
   end
 
   def self.schema

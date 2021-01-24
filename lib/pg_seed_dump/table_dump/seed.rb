@@ -13,12 +13,12 @@ module PgSeedDump
       end
 
       def add_seed_records_to_process(ids)
-        if processed_ids.any?
+        if @processed_ids.any?
           raise StandardError,
                 "Table seed records cannot be added if there are already processed ids"
         end
 
-        pending_to_process_ids.merge(ids)
+        @pending_to_process_ids.merge(ids)
       end
     end
   end

@@ -14,40 +14,38 @@ module PgSeedDump
       end
 
       def add_records_to_process(ids)
-        previous_size = pending_to_process_ids.size
-        pending_to_process_ids.merge(Set.new(ids) - processed_ids)
+        previous_size = @pending_to_process_ids.size
+        @pending_to_process_ids.merge(Set.new(ids) - @processed_ids)
 
-        pending_to_process_ids.size - previous_size
+        @pending_to_process_ids.size - previous_size
       end
 
       def pending_to_process_records?
-        pending_to_process_ids.any?
+        @pending_to_process_ids.any?
       end
 
       def dump_pending_records
         return unless pending_to_process_records?
 
-        ids_to_be_processed = pending_to_process_ids.dup
-        table_copy.process_records(ids_to_be_processed)
-        table_copy.process_associated_records(ids_to_be_processed)
+        ids_to_be_processed = @pending_to_process_ids.dup
+        @table_copy.process_records(ids_to_be_processed)
+        @table_copy.process_associated_records(ids_to_be_processed)
         ids_to_be_processed.each { |id| record_processed(id) }
       end
 
       def dump_processed_to_file(file)
-        table_copy.write_copy_to_file(file)
+        @table_copy.write_copy_to_file(file)
       end
 
       def num_records_processed
-        table_copy.num_records_processed
+        @table_copy.num_records_processed
       end
 
       private
 
-      attr_reader :processed_ids, :pending_to_process_ids, :table_copy
-
       def record_processed(id)
-        pending_to_process_ids.delete(id)
-        processed_ids.add(id)
+        @pending_to_process_ids.delete(id)
+        @processed_ids.add(id)
       end
     end
   end

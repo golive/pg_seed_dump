@@ -1,13 +1,11 @@
 # frozen_string_literal: true
-require_relative "foreign_key"
-require_relative "column_transform"
 
 module PgSeedDump
   module TableConfiguration
     class Base
-      attr_reader :table_name, :foreign_keys, :transforms, :sequence_name
+      attr_reader :table_name, :foreign_keys, :primary_key, :transforms, :sequence_name
 
-      def initialize(schema, table_name, _options = {})
+      def initialize(schema, table_name)
         unless ::ActiveRecord::Base.connection.table_exists?(table_name)
           raise Schema::TableNotExistsError,
                 "Table #{table_name} doesn't exist"
@@ -17,7 +15,7 @@ module PgSeedDump
         @foreign_keys = Set.new
         @transforms = []
         primary_key, sequence = ActiveRecord::Base.connection.pk_and_sequence_for(table_name)
-        @primary_key = primary_key&.to_sym || :id
+        @primary_key = :id
         @sequence_name = sequence&.identifier
       end
 
@@ -37,30 +35,16 @@ module PgSeedDump
         @schema.associated_to_table(table_name, &block)
       end
 
-      def primary_key(column_name = nil)
-        @primary_key = column_name.to_sym if column_name
-        @primary_key
+      def primary_key=(column_name)
+        @primary_key = column_name.to_sym
       end
 
-      def foreign_key(to_table, id_column, type_column: nil, type_value: nil, pull: true)
-        ForeignKey.new(table_name, id_column, to_table, type_column: type_column,
-                       type_value: type_value, pull: pull).tap do |foreign_key|
-          @foreign_keys << foreign_key
-        end
+      def add_foreign_key(foreign_key)
+        @foreign_keys << foreign_key
       end
 
-      def polymorphic_foreign_key(id_column, type_column, table_types_map, pull: true)
-        if table_types_map.empty?
-          raise StandardError, "Add at least one table to type map in #{table_name}.#{id_column}"
-        end
-        table_types_map.map do |to_table, value|
-          foreign_key(to_table, id_column, type_column: type_column,
-                      type_value: value, pull: pull)
-        end
-      end
-
-      def transform(attribute, &block)
-        @transforms << ColumnTransform.new(attribute, block)
+      def add_transform(transform)
+        @transforms << transform
       end
     end
   end

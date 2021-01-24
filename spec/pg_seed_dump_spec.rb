@@ -5,22 +5,21 @@ RSpec.describe PgSeedDump do
     expect(PgSeedDump::VERSION).not_to be nil
   end
 
-  describe ".configure" do
-    it "always yields the same schema object" do
-      PgSeedDump.configure do |config|
-        expect(config).to be_an_instance_of(PgSeedDump::Schema)
-        PgSeedDump.configure do |other_config|
-          expect(other_config.object_id).to eq config.object_id
-        end
-      end
-    end
-  end
-
   describe ".schema" do
     it "always returns the same schema object" do
       schema = PgSeedDump.schema
       expect(schema).to be_an_instance_of(PgSeedDump::Schema)
       expect(schema.object_id).to eq PgSeedDump.schema.object_id
+    end
+  end
+
+  describe ".configure" do
+    it "always uses a global schema" do
+      expect(PgSeedDump::Schema::Dsl).to receive(:new).with(PgSeedDump.schema).twice.and_call_original
+      PgSeedDump.configure do |dsl|
+        expect(dsl).to be_an_instance_of(PgSeedDump::Schema::Dsl)
+      end
+      PgSeedDump.configure {}
     end
   end
 
@@ -71,10 +70,10 @@ RSpec.describe PgSeedDump do
           end
 
           config.partial :comments do |t|
-            t.polymorphic_foreign_key :commentable_id, :commentable_type, {
-              users: 'User',
-              blog_posts: 'BlogPost'
-            }
+            t.polymorphic_foreign_key :commentable_id, :commentable_type do |fk|
+              fk.foreign_key :users, type: 'User'
+              fk.foreign_key :blog_posts, type: 'BlogPost'
+            end
           end
 
           config.full :tags
