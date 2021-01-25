@@ -55,7 +55,10 @@ module PgSeedDump
       @table_configuration.associated_tables do |associated_table_configuration, foreign_keys|
         next if associated_table_configuration.full? # It will be loaded anyway
 
-        query = query_for_associated(ids, associated_table_configuration, foreign_keys)
+        pull_foreign_keys = foreign_keys.select(&:pull)
+        next if pull_foreign_keys.empty?
+
+        query = query_for_associated(ids, associated_table_configuration, pull_foreign_keys)
         associated_ids = DB::Query.new(query).rows.map { |row| row[0].to_i }
         num = @table_dumps.add_records_to_process(associated_table_configuration.table_name, associated_ids)
         if num > 0

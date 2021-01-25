@@ -4,6 +4,7 @@ require "pg_seed_dump/table_configuration/full"
 require "pg_seed_dump/db/query"
 require "pg_seed_dump/file_dump"
 require "pg_seed_dump/support/measure"
+require "pg_seed_dump/schema/validator"
 
 module PgSeedDump
   class Runner
@@ -18,8 +19,9 @@ module PgSeedDump
     end
 
     def dump!
+      Log.info "Validating the schema..."
+      Schema::Validator.new(@schema).validate!
       Log.info "Starting dump..."
-      # TODO: Validate schema
 
       measure = Support::Measure.start
       ActiveRecord::Base.transaction do

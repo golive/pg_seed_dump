@@ -9,8 +9,6 @@ module PgSeedDump
 
     def dump_to(file_path)
       File.open(file_path, "wb") do |file|
-        # file.sync = true
-
         write_pre_data(file)
         write_data(file)
         write_post_data(file)
@@ -40,8 +38,10 @@ module PgSeedDump
 
       params = []
       params << "-d #{db_config[:database]}"
-      @schema.configured_tables.each do |table_name|
-        params << "-t #{table_name}"
+      unless @schema.dump_all_db_objects
+        @schema.configured_tables.each do |table_name|
+          params << "-t #{table_name}"
+        end
       end
       params << "-U #{db_config[:username]}" if db_config[:username]
       params << "-h #{db_config[:host]}" if db_config[:host]

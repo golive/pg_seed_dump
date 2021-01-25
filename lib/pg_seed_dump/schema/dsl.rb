@@ -13,6 +13,10 @@ module PgSeedDump
         @schema = schema
       end
 
+      def dump_all_db_objects!
+        @schema.dump_all_db_objects = true
+      end
+
       def seed(table_name, options = {}, &block)
         options.transform_keys!(&:to_sym)
         setup_configuration("seed", table_name, &block).tap do |table_configuration|

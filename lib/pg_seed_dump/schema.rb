@@ -5,15 +5,17 @@ require "pg_seed_dump/table_configuration/partial"
 
 module PgSeedDump
   class Schema
+    attr_accessor :dump_all_db_objects
     attr_reader :seed_table_configurations,
                 :full_table_configurations,
                 :partial_table_configurations
 
-    TableNotExistsError      = Class.new(StandardError)
-    ColumnNotExistsError     = Class.new(StandardError)
+    TableNotExistsError = Class.new(StandardError)
+    ColumnNotExistsError = Class.new(StandardError)
     TableAlreadyDefinedError = Class.new(StandardError)
 
     def initialize
+      @dump_all_db_objects = false
       @table_configurations_map = {}
       @seed_table_configurations = []
       @full_table_configurations = []
