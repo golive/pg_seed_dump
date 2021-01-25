@@ -5,8 +5,6 @@ require "pg_seed_dump/db/table_columns"
 
 module PgSeedDump
   class TableToSqlCopy
-    NIL_VALUE = '\N'
-
     attr_reader :num_records_processed
 
     def initialize(table_configuration, table_dumps)
@@ -20,17 +18,19 @@ module PgSeedDump
     end
 
     def process_records(ids = nil)
-      num_records = 0
       ids = [*ids]
+      num_records = 0
+      copy_encoder = @columns.copy_encoder
+      encoding = ActiveRecord::Base.connection.raw_connection.internal_encoding
+
       measure = Support::Measure.start
       Log.debug(@table_name.to_s.cyan) { "Start processing" }
-      DB::Query.new(query_for(ids)).rows.each do |row|
+      DB::Query.new(query_for(ids), decoder: @columns.copy_decoder).rows.each do |row|
         transform_attributes(row)
         process_foreign_keys(row)
 
-        # TODO: process transforms
-
-        @tempfile.puts row.join("\t")
+        encoded_row = copy_encoder.encode(row, encoding)
+        @tempfile.puts clean_escape_chars(encoded_row)
 
         num_records += 1
         if @table_configuration.sequence_name
@@ -38,6 +38,7 @@ module PgSeedDump
           @max_id = [@max_id, id].max
         end
       end
+
       Log.debug(@table_name.to_s.cyan) { "[#{measure.elapsed}] End processing (#{num_records} records)" }
       @num_records_processed += num_records
       missing_num_records = num_records - ids.size
@@ -107,7 +108,7 @@ module PgSeedDump
       foreign_key_ids = Hash.new { |h,k| h[k] = [] }
       @table_configuration.foreign_keys.each do |foreign_key|
         foreign_key_value = @columns.value_at(row, foreign_key.column_name)
-        next if foreign_key_value == NIL_VALUE
+        next if foreign_key_value.nil?
 
         if foreign_key.polymorphic?
           type_value = @columns.value_at(row, foreign_key.type_column)
@@ -130,7 +131,7 @@ module PgSeedDump
           @columns.value_at(row, column_name)
         end
         new_value = transform.call(*block_params)
-        @columns.set_value(row, transform.column_name, new_value || NIL_VALUE)
+        @columns.set_value(row, transform.column_name, new_value)
       end
     end
 
@@ -138,6 +139,13 @@ module PgSeedDump
       return unless @table_configuration.sequence_name
 
       "SELECT pg_catalog.setval('public.#{@table_configuration.sequence_name}', #{@max_id});\n\n"
+    end
+
+    def clean_escape_chars(row)
+      # TODO: try to work with pg encoders so this is not needed
+      row.gsub!("\\\n", "\\n")
+      row.gsub!("\\\t", "\\t")
+      row
     end
   end
 end
