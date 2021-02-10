@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "pg_seed_dump/db/schema"
 
 module PgSeedDump
   module TableConfiguration
@@ -6,7 +7,7 @@ module PgSeedDump
       attr_reader :table_name, :foreign_keys, :primary_key, :transforms, :sequence_name
 
       def initialize(schema, table_name)
-        unless ::ActiveRecord::Base.connection.table_exists?(table_name)
+        unless DB::Schema.table_exists?(table_name)
           raise Schema::TableNotExistsError,
                 "Table #{table_name} doesn't exist"
         end
@@ -14,9 +15,9 @@ module PgSeedDump
         @table_name = table_name.to_sym
         @foreign_keys = Set.new
         @transforms = []
-        primary_key, sequence = ActiveRecord::Base.connection.pk_and_sequence_for(table_name)
-        @primary_key = :id
-        @sequence_name = sequence&.identifier
+        primary_key = DB::Schema.primary_key_for(table_name)
+        @primary_key = (primary_key || :id).to_sym
+        @sequence_name = DB::Schema.sequence_for(table_name)
       end
 
       def full?

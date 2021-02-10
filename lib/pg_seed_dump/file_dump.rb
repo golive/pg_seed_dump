@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "pg_seed_dump/db"
 
 module PgSeedDump
   class FileDump
@@ -37,28 +38,18 @@ module PgSeedDump
       return @pg_dump_params if defined?(@pg_dump_params)
 
       params = []
-      params << "-d #{db_config[:database]}"
+      params << "-d #{DB.config[:database]}"
       unless @schema.dump_all_db_objects
         @schema.configured_tables.each do |table_name|
           params << "-t #{table_name}"
         end
       end
-      params << "-U #{db_config[:username]}" if db_config[:username]
-      params << "-h #{db_config[:host]}" if db_config[:host]
-      params << "-w #{db_config[:password]}" if db_config[:password]
-      params << "-p #{db_config[:port]}" if db_config[:port]
+      params << "-U #{DB.config[:username]}" if DB.config[:username]
+      params << "-h #{DB.config[:host]}"     if DB.config[:host]
+      params << "-w #{DB.config[:password]}" if DB.config[:password]
+      params << "-p #{DB.config[:port]}"     if DB.config[:port]
 
       @pg_dump_params = params.join(" ")
-    end
-
-    def db_config
-      @db_config ||= begin
-        if ActiveRecord::Base.respond_to?(:connection_db_config)
-          return ActiveRecord::Base.connection_db_config.configuration_hash
-        end
-
-        ActiveRecord::Base.connection_config
-      end
     end
   end
 end

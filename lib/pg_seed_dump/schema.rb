@@ -41,7 +41,7 @@ module PgSeedDump
     end
 
     def configuration_for_table(table_name)
-      @table_configurations_map.fetch(table_name.to_sym)
+      @table_configurations_map[table_name.to_sym]
     end
 
     def associated_to_table(table_name, &block)

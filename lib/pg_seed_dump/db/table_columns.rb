@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require "pg_seed_dump/db/query"
+require "pg_seed_dump/db/schema"
 
 module PgSeedDump
   module DB
@@ -7,7 +9,7 @@ module PgSeedDump
 
       def initialize(table_name)
         @table_name = table_name
-        @columns = connection.columns(table_name).map { |c| c.name.to_sym }
+        @columns = DB::Schema.columns(table_name).map { |c| c.name.to_sym }
         @column_positions = @columns.each_with_object({}).with_index do |(column, h), i|
           h[column] = i
         end
@@ -26,11 +28,15 @@ module PgSeedDump
       end
 
       def copy_decoder
-        @decoder ||= PG::TextDecoder::CopyRow.new(type_map: type_map(PG::BasicTypeMapForResults))
+        @copy_decoder ||= PG::TextDecoder::CopyRow.new(
+          type_map: DB::Schema.column_type_map(PG::BasicTypeMapForResults, column_oids)
+        )
       end
 
       def copy_encoder
-        @encoder ||= PG::TextEncoder::CopyRow.new(type_map: type_map(PG::BasicTypeMapBasedOnResult))
+        @copy_encoder ||= PG::TextEncoder::CopyRow.new(
+          type_map: DB::Schema.column_type_map(PG::BasicTypeMapBasedOnResult, column_oids)
+        )
       end
 
       private
@@ -39,20 +45,8 @@ module PgSeedDump
         @column_positions.fetch(column_name.to_sym)
       end
 
-      def connection
-        ActiveRecord::Base.connection
-      end
-
-      def raw_connection
-        connection.raw_connection
-      end
-
       def column_oids
-        @column_oids ||= raw_connection.exec("SELECT #{self} FROM #{@table_name} LIMIT 0")
-      end
-
-      def type_map(mapper_class)
-        mapper_class.new(raw_connection).build_column_map(column_oids)
+        @column_oids ||= DB::Query.exec("SELECT #{self} FROM #{@table_name} LIMIT 0")
       end
     end
   end

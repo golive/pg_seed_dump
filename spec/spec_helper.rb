@@ -47,3 +47,7 @@ def with_dump_file_recover(file_path)
 ensure
   Schema.load
 end
+
+def share_same_connection!
+  allow(PgSeedDump::DB).to receive(:connection).and_return(ActiveRecord::Base.connection)
+end

@@ -15,8 +15,12 @@ module PgSeedDump
     @schema ||= Schema.new
   end
 
-  def self.dump(file_path:, log_file_path: nil, debug: false)
+  def self.dump(file_path:, log_file_path: nil, debug: false, validate: true)
     Log.setup(log_file_path, debug: debug) if log_file_path
+    if validate
+      Log.info "Validating the schema..."
+      Schema::Validator.new(@schema).validate!
+    end
     Runner.dump!(schema, file_path)
   end
 end

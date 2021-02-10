@@ -2,6 +2,7 @@
 require "tempfile"
 require "pg_seed_dump/db/query"
 require "pg_seed_dump/db/table_columns"
+require "pg_seed_dump/db"
 
 module PgSeedDump
   class TableToSqlCopy
@@ -21,7 +22,7 @@ module PgSeedDump
       ids = [*ids]
       num_records = 0
       copy_encoder = @columns.copy_encoder
-      encoding = ActiveRecord::Base.connection.raw_connection.internal_encoding
+      encoding = DB.internal_encoding
 
       measure = Support::Measure.start
       Log.debug(@table_name.to_s.cyan) { "Start processing" }

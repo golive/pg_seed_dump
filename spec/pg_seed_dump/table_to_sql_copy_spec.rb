@@ -26,7 +26,7 @@ RSpec.describe PgSeedDump::TableToSqlCopy, :transactional do
 
   let(:table_dumps) { spy("PgSeedDump::TableDumps") }
   let(:time) { Time.utc(2020, 12, 28, 0, 0, 0) }
-  let(:db_time) { time.strftime("%Y-%m-%d %H:%M:%S") }
+  let(:db_time) { time.strftime("%Y-%m-%d %H:%M:%S.%N") }
 
   subject { described_class.new(blog_posts_table_configuration, table_dumps) }
 

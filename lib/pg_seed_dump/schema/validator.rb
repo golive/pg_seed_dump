@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "pg_seed_dump/db/schema"
 
 module PgSeedDump
   class Schema
@@ -17,7 +18,7 @@ module PgSeedDump
       private
 
       def validate_all_tables_configured
-        missing_tables = ActiveRecord::Base.connection.tables.map(&:to_sym) - @schema.configured_tables
+        missing_tables = DB::Schema.tables.map(&:to_sym) - @schema.configured_tables
         if missing_tables.any?
           raise StandardError, "Missing configuration for #{missing_tables} table#{"s" if missing_tables.many?}"
         end
@@ -66,15 +67,14 @@ module PgSeedDump
       end
 
       def db_foreign_keys(table_configuration)
-        ActiveRecord::Base.connection.foreign_keys(table_configuration.table_name).map do |foreign_key|
+        DB::Schema.foreign_keys_for(table_configuration.table_name).map do |foreign_key|
           to_table = foreign_key.to_table.to_sym
           column_name = foreign_key.options[:column].to_sym
 
-          table_configuration = @schema.configuration_for_table(to_table)
-          if table_configuration
-            next if table_configuration.full?
-            next if table_configuration.transforms.any? { |t| t.column_name == column_name }
-          end
+          next if table_configuration.transforms.any? { |t| t.column_name == column_name }
+
+          to_table_configuration = @schema.configuration_for_table(to_table)
+          next if to_table_configuration && to_table_configuration.full?
 
           [to_table, column_name]
         end.compact

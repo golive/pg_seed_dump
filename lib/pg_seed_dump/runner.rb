@@ -5,6 +5,7 @@ require "pg_seed_dump/db/query"
 require "pg_seed_dump/file_dump"
 require "pg_seed_dump/support/measure"
 require "pg_seed_dump/schema/validator"
+require "pg_seed_dump/db"
 
 module PgSeedDump
   class Runner
@@ -19,18 +20,18 @@ module PgSeedDump
     end
 
     def dump!
-      Log.info "Validating the schema..."
-      Schema::Validator.new(@schema).validate!
-      Log.info "Starting dump..."
+      DB.with_new_connection do
+        Log.info "Starting dump..."
 
-      measure = Support::Measure.start
-      ActiveRecord::Base.transaction do
-        prepare_seed_tables
-        dump_tables
-        dump_full_tables
+        measure = Support::Measure.start
+        DB.transaction do
+          prepare_seed_tables
+          dump_tables
+          dump_full_tables
+        end
+        dump_to_file
+        Log.info "Done in #{measure.elapsed}"
       end
-      dump_to_file
-      Log.info "Done in #{measure.elapsed}"
 
       log_table_statistics
     end

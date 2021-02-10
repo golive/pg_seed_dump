@@ -60,6 +60,7 @@ RSpec.describe PgSeedDump do
           config.seed :users do |t|
             t.seed_query { User.where(id: 100).to_sql }
             t.foreign_key :sections, :favourite_section_id
+            # t.transform(:parent_id) { nil }
           end
 
           config.partial :sections
@@ -82,7 +83,7 @@ RSpec.describe PgSeedDump do
 
       it "Dumps and restores tables correctly" do
         file = Tempfile.new(['', '.dump'])
-        PgSeedDump.dump(file_path: file.path)
+        PgSeedDump.dump(file_path: file.path, validate: false)
         with_dump_file_recover(file.path) do
           expect(User.count).to eq 1
           user = User.last
@@ -111,6 +112,8 @@ RSpec.describe PgSeedDump do
     context "same table associations" do
       context "as seed table" do
         it "protects from loading more records than the ones acting as seed", :transactional do
+          share_same_connection!
+
           PgSeedDump.configure do |config|
             config.seed :users do |t|
               t.seed_query { User.where(id: 2).to_sql }
@@ -122,7 +125,7 @@ RSpec.describe PgSeedDump do
           User.create(id: 2, name: "Name 2", parent_id: 1)
 
           file = Tempfile.new(['', '.dump'])
-          expect { PgSeedDump.dump(file_path: file.path) }.to(
+          expect { PgSeedDump.dump(file_path: file.path, validate: false) }.to(
             raise_error(StandardError, "Seed table users cannot receive new records for processing")
           )
           file.close!
@@ -149,7 +152,7 @@ RSpec.describe PgSeedDump do
           BlogPost.create(id: 1, user_id: 2)
 
           file = Tempfile.new(['', '.dump'])
-          PgSeedDump.dump(file_path: file.path)
+          PgSeedDump.dump(file_path: file.path, validate: false)
           with_dump_file_recover(file.path) do
             expect(User.count).to eq 3
           end

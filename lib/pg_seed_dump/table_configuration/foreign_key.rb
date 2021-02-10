@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "pg_seed_dump/db/schema"
 
 module PgSeedDump
   module TableConfiguration
@@ -42,7 +43,7 @@ module PgSeedDump
 
       def check_tables_exist!(table_names)
         table_names.each do |table_name|
-          unless ActiveRecord::Base.connection.table_exists?(table_name)
+          unless DB::Schema.table_exists?(table_name)
             raise Schema::TableNotExistsError, "Table #{table_name} doesn't exist"
           end
         end
@@ -50,7 +51,7 @@ module PgSeedDump
 
       def check_columns_exist!(column_names, table_name)
         missing_column_names = column_names.reject do |column_name|
-          ActiveRecord::Base.connection.column_exists?(table_name, column_name)
+          DB::Schema.column_exists?(table_name, column_name)
         end
         return if missing_column_names.empty?
 
