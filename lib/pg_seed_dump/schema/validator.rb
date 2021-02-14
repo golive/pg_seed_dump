@@ -34,26 +34,34 @@ module PgSeedDump
       end
 
       def validate_associations
-        configured_tables = @schema.configured_tables
         @schema.table_configurations.each do |table_configuration|
           table_configuration.foreign_keys.each do |foreign_key|
-            next if configured_tables.include?(foreign_key.to_table)
-
-            raise StandardError,
-                  "Associated table #{foreign_key.to_table} in " \
-                  "#{foreign_key.from_table}.#{foreign_key.column_name} doesn't exist"
+            to_table_configuration = @schema.configuration_for_table(foreign_key.to_table)
+            if to_table_configuration.nil?
+              raise StandardError,
+                    "Associated table #{foreign_key.to_table} in " \
+                    "#{foreign_key.from_table}.#{foreign_key.column_name} doesn't exist"
+            end
+            if to_table_configuration.empty?
+              raise StandardError,
+                    "Associated table #{foreign_key.to_table} in " \
+                    "#{foreign_key.from_table}.#{foreign_key.column_name} is configured as empty"
+            end
           end
         end
       end
 
       def check_missing_associations
         @schema.table_configurations.each do |table_configuration|
+          next if table_configuration.empty?
+
           missing_foreign_keys = db_foreign_keys(table_configuration) - configured_foreign_keys(table_configuration)
 
           if missing_foreign_keys.any?
             # TODO: pending
-            raise StandardError, "Missing foreign keys #{missing_foreign_keys.map(&:last).join(', ')} " \
-                                 "for table #{table_configuration.table_name}"
+            raise StandardError,
+                  "Missing foreign keys #{missing_foreign_keys.map(&:last).join(', ')} " \
+                  "for table #{table_configuration.table_name}"
           end
         end
       end

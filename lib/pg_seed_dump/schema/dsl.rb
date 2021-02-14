@@ -2,6 +2,7 @@
 require "pg_seed_dump/table_configuration/seed"
 require "pg_seed_dump/table_configuration/full"
 require "pg_seed_dump/table_configuration/partial"
+require "pg_seed_dump/table_configuration/empty"
 require "pg_seed_dump/table_configuration/dsl/seed"
 require "pg_seed_dump/table_configuration/dsl/full"
 require "pg_seed_dump/table_configuration/dsl/partial"
@@ -32,14 +33,20 @@ module PgSeedDump
         setup_configuration("partial", table_name, &block)
       end
 
+      def empty_table(table_name)
+        setup_configuration("empty", table_name)
+      end
+
       private
 
       def setup_configuration(type, table_name)
         class_name = type.capitalize
         TableConfiguration.const_get(class_name).new(@schema, table_name).tap do |table_configuration|
           @schema.public_send("add_#{type}_configuration", table_configuration)
-          dsl = TableConfiguration::Dsl.const_get(class_name).new(table_configuration)
-          yield(dsl) if block_given?
+          if block_given?
+            dsl = TableConfiguration::Dsl.const_get(class_name).new(table_configuration)
+            yield(dsl)
+          end
         end
       end
     end

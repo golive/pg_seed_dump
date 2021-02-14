@@ -8,7 +8,8 @@ module PgSeedDump
     attr_accessor :dump_all_db_objects
     attr_reader :seed_table_configurations,
                 :full_table_configurations,
-                :partial_table_configurations
+                :partial_table_configurations,
+                :empty_table_configurations
 
     TableNotExistsError = Class.new(StandardError)
     ColumnNotExistsError = Class.new(StandardError)
@@ -20,9 +21,10 @@ module PgSeedDump
       @seed_table_configurations = []
       @full_table_configurations = []
       @partial_table_configurations = []
+      @empty_table_configurations = []
     end
 
-    %i[seed full partial].each do |type|
+    %i[seed full partial empty].each do |type|
       define_method "add_#{type}_configuration" do |table_configuration|
         table_name = table_configuration.table_name
         prevent_same_table_configuration(table_name)

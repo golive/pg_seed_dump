@@ -32,6 +32,10 @@ module PgSeedDump
         false
       end
 
+      def empty?
+        false
+      end
+
       def associated_tables(&block)
         @schema.associated_to_table(table_name, &block)
       end
