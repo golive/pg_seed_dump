@@ -20,15 +20,16 @@ module PgSeedDump
       def validate_all_tables_configured
         missing_tables = DB::Schema.tables.map(&:to_sym) - @schema.configured_tables
         if missing_tables.any?
-          raise StandardError, "Missing configuration for #{missing_tables} table#{"s" if missing_tables.many?}"
+          raise "Missing configuration for #{missing_tables} table#{"s" if missing_tables.many?}"
         end
       end
 
       def validate_seed_tables_with_query
+        raise "Missing seed tables" if @schema.seed_table_configurations.empty?
+
         seed_tables_without_seed_query = @schema.seed_table_configurations.reject(&:seed_query)
         if seed_tables_without_seed_query.any?
-          raise StandardError,
-                "Missing seed query for #{seed_table_configurations.map(&:table_name).join(', ')}" \
+          raise "Missing seed query for #{seed_table_configurations.map(&:table_name).join(', ')}" \
                 "table#{"s" if seed_table_configurations.many?}"
         end
       end
@@ -38,13 +39,11 @@ module PgSeedDump
           table_configuration.foreign_keys.each do |foreign_key|
             to_table_configuration = @schema.configuration_for_table(foreign_key.to_table)
             if to_table_configuration.nil?
-              raise StandardError,
-                    "Associated table #{foreign_key.to_table} in " \
+              raise "Associated table #{foreign_key.to_table} in " \
                     "#{foreign_key.from_table}.#{foreign_key.column_name} doesn't exist"
             end
             if to_table_configuration.empty?
-              raise StandardError,
-                    "Associated table #{foreign_key.to_table} in " \
+              raise "Associated table #{foreign_key.to_table} in " \
                     "#{foreign_key.from_table}.#{foreign_key.column_name} is configured as empty"
             end
           end
@@ -59,8 +58,7 @@ module PgSeedDump
 
           if missing_foreign_keys.any?
             # TODO: pending
-            raise StandardError,
-                  "Missing foreign keys #{missing_foreign_keys.map(&:last).join(', ')} " \
+            raise "Missing foreign keys #{missing_foreign_keys.map(&:last).join(', ')} " \
                   "for table #{table_configuration.table_name}"
           end
         end
@@ -79,7 +77,8 @@ module PgSeedDump
           to_table = foreign_key.to_table.to_sym
           column_name = foreign_key.options[:column].to_sym
 
-          next if table_configuration.transforms.any? { |t| t.column_name == column_name }
+          transform = table_configuration.transforms.reverse.find { |t| t.column_name == column_name }
+          next if transform && transform.call.nil?
 
           to_table_configuration = @schema.configuration_for_table(to_table)
           next if to_table_configuration && to_table_configuration.full?
