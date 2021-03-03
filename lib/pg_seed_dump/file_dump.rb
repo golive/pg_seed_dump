@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "open3"
 require "pg_seed_dump/db"
 
 module PgSeedDump
@@ -19,7 +20,10 @@ module PgSeedDump
     private
 
     def run_pg_dump(section)
-      IO.popen("pg_dump #{pg_dump_params} --format=plain --section=#{section}").read
+      result, stderr, status = Open3.capture3(pg_dump_env, "pg_dump #{pg_dump_params} --format=plain --section=#{section}")
+      raise stderr unless status.success?
+
+      result
     end
 
     def write_pre_data(file)
@@ -34,10 +38,16 @@ module PgSeedDump
       file.write(run_pg_dump("post-data"))
     end
 
+    def pg_dump_env
+      return {} if DB.config[:password].to_s.empty?
+
+      { "PGPASSWORD" => DB.config[:password] }
+    end
+
     def pg_dump_params
       return @pg_dump_params if defined?(@pg_dump_params)
 
-      params = []
+      params = ["-w"]
       params << "-d #{DB.config[:database]}"
       unless @schema.dump_all_db_objects
         @schema.configured_tables.each do |table_name|
@@ -46,7 +56,6 @@ module PgSeedDump
       end
       params << "-U #{DB.config[:username]}" if DB.config[:username]
       params << "-h #{DB.config[:host]}"     if DB.config[:host]
-      params << "-w #{DB.config[:password]}" if DB.config[:password]
       params << "-p #{DB.config[:port]}"     if DB.config[:port]
 
       @pg_dump_params = params.join(" ")
