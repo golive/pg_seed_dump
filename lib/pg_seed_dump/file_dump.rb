@@ -44,6 +44,11 @@ module PgSeedDump
       { "PGPASSWORD" => DB.config[:password] }
     end
 
+    def pg_dump_version
+      result, _status = Open3.capture2("pg_dump --version")
+      result.slice(/(\d+)\.?/, 1).to_i
+    end
+
     def pg_dump_params
       return @pg_dump_params if defined?(@pg_dump_params)
 
@@ -55,8 +60,9 @@ module PgSeedDump
         end
       end
       params << "-U #{DB.config[:username]}" if DB.config[:username]
-      params << "-h #{DB.config[:host]}"     if DB.config[:host]
-      params << "-p #{DB.config[:port]}"     if DB.config[:port]
+      params << "-h #{DB.config[:host]}" if DB.config[:host]
+      params << "-p #{DB.config[:port]}" if DB.config[:port]
+      params << "--no-publications" if pg_dump_version >= 10
 
       @pg_dump_params = params.join(" ")
     end
